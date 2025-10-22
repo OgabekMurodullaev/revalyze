@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "apps.analysis",
 
     # 3rd party
+    'rest_framework',
 
 ]
 
@@ -62,7 +63,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Custom User model
-AUTH_USER_MODEL = "apps.users.User"
+AUTH_USER_MODEL = "users.User"
 
 
 # Database

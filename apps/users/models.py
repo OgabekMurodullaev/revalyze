@@ -3,8 +3,8 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from managers import UserManager
-from utils import check_otp_code
+from .managers import UserManager
+from .utils import check_otp_code
 
 
 class User(AbstractUser):
