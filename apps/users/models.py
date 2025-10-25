@@ -60,12 +60,14 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     bio = models.CharField(_("Bio"), max_length=128, null=True, blank=True)
     location = models.CharField(_("Location"), max_length=128, null=True, blank=True)
-    phone_number = models.CharField(_("Phone Number"), max_length=20, validators=[RegexValidator(r'^\+?1?\d{9,13}$')])
+    phone_number = models.CharField(_("Phone Number"), max_length=20, validators=[RegexValidator(r'^\+?1?\d{9,13}$')], null=True, blank=True)
     linkedin_url = models.URLField(_("Linkedin url"), null=True, blank=True)
     github_url = models.URLField(_("Github url"), null=True, blank=True)
     profile_image = models.ImageField(_("Profile image"), upload_to="profile-images/", null=True, blank=True)
     preferred_job_titles = models.JSONField(_("Preferred job titles"), null=True, blank=True)
     resume_count = models.IntegerField(_("Resume count"), default=0)
+
+    objects = models.Manager()
 
     def __str__(self):
         return f"{self.user.email}'s profile"

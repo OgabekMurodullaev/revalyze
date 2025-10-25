@@ -4,7 +4,7 @@ from django.dispatch import receiver
 
 from apps.users.tasks import send_verification_otp
 from core.settings.base import OTP_CODE_ACTIVATION_TIME
-from apps.users.models import User, VerificationOtp
+from apps.users.models import User, VerificationOtp, UserProfile
 from apps.users.utils import generate_code
 
 
@@ -16,3 +16,12 @@ def create_verification_otp(sender, instance, created, **kwargs):
                                        expires_in=datetime.now() + timedelta(minutes=OTP_CODE_ACTIVATION_TIME))
         send_verification_otp(email=instance.email, code=code)
         print("Signal is working")
+
+
+@receiver(post_save, sender=User)
+def create_profile_after_verification(sender, instance, **kwargs):
+    if hasattr(instance, 'profile'):
+        return
+
+    if instance.is_verified:
+        UserProfile.objects.create(user=instance)
