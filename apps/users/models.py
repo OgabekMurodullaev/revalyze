@@ -13,6 +13,8 @@ class User(AbstractUser):
         RECRUITER = "recruiter", _("Recruiter")
         ADMIN = "admin", _("Admin")
 
+    username = None
+
     email = models.EmailField(unique=True)
     role = models.CharField(_("Role"), max_length=9, choices=UserRoleChoices, default=UserRoleChoices.USER)
     is_verified = models.BooleanField(_("Verified"), default=False)
@@ -36,8 +38,12 @@ class VerificationOtp(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="verification_otp")
     code = models.IntegerField(_("Otp code"), validators=[check_otp_code])
+    verify_type = models.CharField(_("Verification type"), max_length=14, choices=VerificationType.choices,
+                                   default=VerificationType.REGISTER)
     expires_in = models.DateTimeField(_("Expires in"))
     is_active = models.BooleanField(default=True)
+
+    objects = models.Manager()
 
     def __str__(self) -> str:
         return f"{self.user.email} | code: {self.code}"
