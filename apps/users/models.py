@@ -18,6 +18,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     role = models.CharField(_("Role"), max_length=9, choices=UserRoleChoices, default=UserRoleChoices.USER)
     is_verified = models.BooleanField(_("Verified"), default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = "email"
     objects = UserManager()
@@ -42,6 +43,8 @@ class VerificationOtp(models.Model):
                                    default=VerificationType.REGISTER)
     expires_in = models.DateTimeField(_("Expires in"))
     is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     objects = models.Manager()
 
