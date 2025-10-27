@@ -1,14 +1,18 @@
 from datetime import datetime, timedelta
 
 from django.db import transaction
-from django.utils import timezone
+
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.users.models import User, VerificationOtp
-from apps.users.serializers import UserRegisterSerializer, VerifyOtpSerializer, ResendOtpSerializer
+from apps.users.models import VerificationOtp, UserProfile
+from apps.users.permissions import IsOwnerOrReadOnly
+from apps.users.serializers import UserRegisterSerializer, VerifyOtpSerializer, ResendOtpSerializer, \
+    UserLoginSerializer, UserLogoutSerializer, UserProfileSerializer
 from apps.users.tasks import send_verification_otp
 from apps.users.utils import generate_code
 from core.settings.base import OTP_CODE_ACTIVATION_TIME
@@ -60,6 +64,38 @@ class VerifyOtpView(APIView):
         )
 
 
+class UserLoginView(APIView):
+    permission_classes = [AllowAny, ]
+    serializer_class = UserLoginSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
+        access = refresh.access_token
+
+        data = {
+            "message": "Muvaffaqiyatli login",
+            "access": str(access),
+            "refresh": str(refresh)
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class UserLogoutView(APIView):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = UserLogoutSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Tizimdan chiqildi."}, status=status.HTTP_204_NO_CONTENT)
+
+
+
 class ResendOtpView(APIView):
     permission_classes = [AllowAny, ]
     serializer_class = ResendOtpSerializer
@@ -80,3 +116,18 @@ class ResendOtpView(APIView):
                                        expires_in=datetime.now() + timedelta(minutes=OTP_CODE_ACTIVATION_TIME))
         send_verification_otp(user.email, code)
         return Response({"message": "Tasdiqlash kodi emailingizga yuborildi", "code_id": code.id}, status=status.HTTP_200_OK)
+
+
+class UserProfileViewSet(ModelViewSet):
+    queryset = UserProfile.objects.select_related('user')
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    serializer_class = UserProfileSerializer
+    http_method_names = ['get', 'put', 'patch', 'delete']
+
+    def get_queryset(self):
+        return self.queryset
+
+    def perform_destroy(self, instance):
+        user = instance.user
+        instance.delete()
+        user.delete()
